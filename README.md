@@ -38,7 +38,7 @@ Installation
           {
               return array(
                   // ...
-                  new Snowcap\CoreBundle\SnowcapYamlFixturesBundle(),
+                  new Snowcap\YamlFixturesBundle\SnowcapYamlFixturesBundle(),
                   // ...
               );
           }
