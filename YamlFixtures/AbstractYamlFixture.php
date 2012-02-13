@@ -96,14 +96,14 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
      * @param string $entityIdentifier
      * @param array $values
      */
-    protected function populateEntity($entity, $entityIdentifier, array $values)
+    protected function populateEntity($entity, $entityIdentifier, array $values = array())
     {
+        if ($entityIdentifier !== null) {
+            $this->setReference($entityIdentifier, $entity);
+        }
         foreach ($values as $field => $value) {
             $processedValue = $this->processValue($field, $value, $entity);
             call_user_func(array($entity, 'set' . Container::camelize($field)), $processedValue);
-            if ($entityIdentifier !== null) {
-                $this->setReference($entityIdentifier, $entity);
-            }
         }
     }
 
@@ -121,6 +121,9 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
         }
         $entries = Yaml::parse($path);
         foreach ($entries as $identifier => $data) {
+            if($data === null) {
+                $data = array();
+            }
             $entityName = $this->manager->getClassMetaData($entityShortcut)->getName();
             $entity = new $entityName();
             $this->populateEntity($entity, $identifier, $data);
