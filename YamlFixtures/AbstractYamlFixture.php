@@ -64,7 +64,7 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
         }
         // If $value is a regular array, perform recursive call on each of its items
         elseif (is_array($value)) {
-            $processedValue = new ArrayCollection();
+            $processedValue = array();
             foreach ($value as $singleValue) {
                 $processedValue[] = $this->processValue($field, $singleValue, $entity);
             }
