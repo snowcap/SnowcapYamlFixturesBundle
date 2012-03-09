@@ -78,7 +78,7 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
             $processedValue = $this->getReference($associatedIdentifier);
         }
         // If $value is a valid date
-        elseif ($this->isDate($value)) {
+        elseif ($this->isDate($value) || $this->isDateTime($value)) {
             $processedValue = new \DateTime($value);
         }
         // Default treatment
