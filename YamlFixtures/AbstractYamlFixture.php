@@ -120,19 +120,22 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
             throw new \ErrorException(sprintf('No file found for path "%s"', $path));
         }
         $entries = Yaml::parse($path);
-        foreach ($entries as $identifier => $data) {
-            if($data === null) {
-                $data = array();
+        if ($entries !== null) {
+            foreach ($entries as $identifier => $data) {
+                if ($data === null) {
+                    $data = array();
+                }
+                $entityName = $this->manager->getClassMetaData($entityShortcut)->getName();
+                $entity = new $entityName();
+                $this->populateEntity($entity, $identifier, $data);
+                if (is_callable($callback)) {
+                    call_user_func($callback, $entity, $data);
+                }
+                $this->manager->persist($entity);
             }
-            $entityName = $this->manager->getClassMetaData($entityShortcut)->getName();
-            $entity = new $entityName();
-            $this->populateEntity($entity, $identifier, $data);
-            if (is_callable($callback)) {
-                call_user_func($callback, $entity, $data);
-            }
-            $this->manager->persist($entity);
+            $this->manager->flush();
         }
-        $this->manager->flush();
+
     }
 
     /**
@@ -148,14 +151,16 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
 
     protected function isDate($value)
     {
-        $validator = $this->container->get('validator');/* @var Symfony\Component\Validator\Validator $validator */
+        $validator = $this->container->get('validator');
+        /* @var Symfony\Component\Validator\Validator $validator */
         $violations = $validator->validateValue($value, new \Symfony\Component\Validator\Constraints\Date());
         return count($violations) === 0;
     }
 
     protected function isDateTime($value)
     {
-        $validator = $this->container->get('validator');/* @var Symfony\Component\Validator\Validator $validator */
+        $validator = $this->container->get('validator');
+        /* @var Symfony\Component\Validator\Validator $validator */
         $violations = $validator->validateValue($value, new \Symfony\Component\Validator\Constraints\DateTime());
         return count($violations) === 0;
     }
@@ -168,7 +173,6 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
         $this->manager = $manager;
         $this->loadYamlFiles();
     }
-
 
 
     public function setContainer(ContainerInterface $container = null)
