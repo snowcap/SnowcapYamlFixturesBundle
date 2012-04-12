@@ -15,6 +15,7 @@ use Symfony\Component\Validator\ConstraintValidatorFactory;
 use Doctrine\Common\Persistence\ObjectManager;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\Validator\Exception\ValidatorException;
 
 /**
  * Check if the passed array is an associative array
@@ -113,8 +114,9 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
      * @param string $path
      * @param string $entityShortcut
      * @param callback $callback
+     * @param bool $validate
      */
-    protected function loadYaml($path, $entityShortcut, $callback = null)
+    protected function loadYaml($path, $entityShortcut, $callback = null, $validate = true)
     {
         if (!file_exists($path)) {
             throw new \ErrorException(sprintf('No file found for path "%s"', $path));
@@ -130,6 +132,17 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
                 $this->populateEntity($entity, $identifier, $data);
                 if (is_callable($callback)) {
                     call_user_func($callback, $entity, $data);
+                }
+                if ($validate) {
+                    /** @var $validator Validator */
+                    $validator = $this->get('validator');
+                    $errors = $validator->validate($entity);
+                    if (count($errors) > 0) {
+                        foreach($errors as $error) {
+                            /** @var $error \Symfony\Component\Validator\ConstraintViolation */
+                            throw new ValidatorException(sprintf('Error on %s with value %s : %s', $error->getPropertyPath(), $error->getInvalidValue(), $error->getMessage()));
+                        }
+                    }
                 }
                 $this->manager->persist($entity);
             }
@@ -175,9 +188,21 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
     }
 
 
+    /**
+     * @param null|\Symfony\Component\DependencyInjection\ContainerInterface $container
+     */
     public function setContainer(ContainerInterface $container = null)
     {
         $this->container = $container;
+    }
+
+    /**
+     * @param $service
+     * @return object|\Symfony\Component\DependencyInjection\The
+     */
+    protected function get($service)
+    {
+        return $this->container->get($service);
     }
 
     abstract public function loadYamlFiles();
