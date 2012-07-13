@@ -2,12 +2,13 @@
 namespace Snowcap\YamlFixturesBundle\YamlFixtures;
 
 use Symfony\Component\Yaml\Yaml,
-Symfony\Component\DependencyInjection\Container,
-Doctrine\Common\CommonException as DoctrineException,
-Doctrine\Common\Collections\ArrayCollection,
-Doctrine\ORM\EntityManager,
-Doctrine\Common\DataFixtures\AbstractFixture,
-Doctrine\Common\DataFixtures\OrderedFixtureInterface;
+    Doctrine\Common\CommonException as DoctrineException,
+    Doctrine\Common\Collections\ArrayCollection,
+    Doctrine\ORM\EntityManager,
+    Doctrine\Common\DataFixtures\AbstractFixture,
+    Doctrine\Common\DataFixtures\OrderedFixtureInterface,
+    Doctrine\Common\Util\Inflector
+;
 use Symfony\Component\Validator\Validator;
 use Symfony\Component\Validator\Mapping\ClassMetadataFactory;
 use Symfony\Component\Validator\Mapping\Loader\StaticMethodLoader;
@@ -21,6 +22,7 @@ use Symfony\Component\Validator\Exception\ValidatorException;
  * Check if the passed array is an associative array
  *
  * @param array $value
+ *
  * @return bool
  */
 function is_assoc($value)
@@ -50,9 +52,11 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
      * Process a fixture value according to its type and / or format
      *
      * @throws \Exception|DoctrineException
+     *
      * @param string $field
-     * @param mixed $value
+     * @param mixed  $value
      * @param object $entity
+     *
      * @return mixed
      */
     protected function processValue($field, $value, $entity)
@@ -62,8 +66,7 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
             $metadata = $this->manager->getClassMetadata(get_class($entity))->getAssociationMapping($field);
             $processedValue = new $metadata['targetEntity'];
             $this->populateEntity($processedValue, null, $value);
-        }
-        // If $value is a regular array, perform recursive call on each of its items
+        } // If $value is a regular array, perform recursive call on each of its items
         elseif (is_array($value)) {
             $processedValue = array();
             foreach ($value as $singleValue) {
@@ -93,9 +96,9 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
      * Populate the entity with the fixture data
      *
      * @param \Doctrine\ORM\EntityManager $manager
-     * @param object $entity
-     * @param string $entityIdentifier
-     * @param array $values
+     * @param object                      $entity
+     * @param string                      $entityIdentifier
+     * @param array                       $values
      */
     protected function populateEntity($entity, $entityIdentifier, array $values = array())
     {
@@ -104,17 +107,17 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
         }
         foreach ($values as $field => $value) {
             $processedValue = $this->processValue($field, $value, $entity);
-            call_user_func(array($entity, 'set' . Container::camelize($field)), $processedValue);
+            call_user_func(array($entity, 'set' . Inflector::camelize($field)), $processedValue);
         }
     }
 
     /**
      * Parse a YAML file and process its data
      *
-     * @param string $path
-     * @param string $entityShortcut
+     * @param string   $path
+     * @param string   $entityShortcut
      * @param callback $callback
-     * @param bool $validate
+     * @param bool     $validate
      */
     protected function loadYaml($path, $entityShortcut, $callback = null, $validate = true)
     {
@@ -138,7 +141,7 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
                     $validator = $this->get('validator');
                     $errors = $validator->validate($entity);
                     if (count($errors) > 0) {
-                        foreach($errors as $error) {
+                        foreach ($errors as $error) {
                             /** @var $error \Symfony\Component\Validator\ConstraintViolation */
                             throw new ValidatorException(sprintf('Error on %s with value %s : %s', $error->getPropertyPath(), $error->getInvalidValue(), $error->getMessage()));
                         }
@@ -155,6 +158,7 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
      * Decode strings to avoid markdown formatting issues
      *
      * @param $string
+     *
      * @return string
      */
     protected function decodeMarkdown($string)
@@ -198,7 +202,8 @@ abstract class AbstractYamlFixture extends AbstractFixture implements OrderedFix
 
     /**
      * @param $service
-     * @return object|\Symfony\Component\DependencyInjection\The
+     *
+     * @return object
      */
     protected function get($service)
     {
